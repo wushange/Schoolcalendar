@@ -1,11 +1,16 @@
 package com.wsg.schoolcalendar.bean;
 
+/**
+ * 网络请求实体
+ */
 public class Result {
 
-
-    int code;
-    Object obj;
-    String msg;
+    //状态码
+    private int code;
+    //泛型对象
+    private Object obj;
+    //信息
+    private String msg;
 
     public int getCode() {
         return code;

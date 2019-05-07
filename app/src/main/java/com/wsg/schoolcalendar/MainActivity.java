@@ -33,11 +33,13 @@ import com.haibin.calendarview.Calendar;
 import com.haibin.calendarview.CalendarLayout;
 import com.haibin.calendarview.CalendarView;
 import com.wsg.schoolcalendar.bean.MyCalendar;
+import com.wsg.schoolcalendar.manager.AppManager;
 import com.wsg.schoolcalendar.push.EventBusCommon;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 import org.xutils.x;
 
@@ -47,6 +49,9 @@ import java.util.Map;
 import java.util.Random;
 
 
+/**
+ * 日历主界面
+ */
 public class MainActivity extends AppCompatActivity implements
         CalendarView.OnViewChangeListener,
         CalendarView.OnCalendarSelectListener,
@@ -78,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements
     private int minute;     //分
     private int seconds;    //秒
 
+    private DbManager dbManager;
+
     @Override
     public void onStart() {
         super.onStart();
@@ -94,8 +101,11 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context = this;
         BarUtils.setStatusBarLightMode(this, true);
+        context = this;
+        dbManager = AppManager.getInstance().getDBManager();
+
+        //实例化控件
         mRlTool = findViewById(R.id.rl_tool);
         mTvMonthDay = findViewById(R.id.tv_month_day);
         mTvYear = findViewById(R.id.tv_year);
@@ -110,11 +120,17 @@ public class MainActivity extends AppCompatActivity implements
         tvCalendarDetail = findViewById(R.id.tv_calendar_detail);
         btnAdd = findViewById(R.id.btn_add);
         btnDelete = findViewById(R.id.btn_delete);
+
+
+        //设置日历长按监听
+        mCalendarView.setOnCalendarLongClickListener(this);
+        //设置日历点击选择监听
+        mCalendarView.setOnCalendarSelectListener(this);
+        //设置日历年份变化监听
+        mCalendarView.setOnYearChangeListener(this);
         initDateTime();
 
-        mCalendarView.setOnCalendarLongClickListener(this);
-        mCalendarView.setOnCalendarSelectListener(this);
-        mCalendarView.setOnYearChangeListener(this);
+
         mYear = mCalendarView.getCurYear();
         mTvMonthDay.setText(mCalendarView.getCurMonth() + "月" + mCalendarView.getCurDay() + "日");
         mTvLunar.setText("今日");
@@ -135,24 +151,13 @@ public class MainActivity extends AppCompatActivity implements
         btnDelete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    Calendar calendar = mCalendarView.getSelectedCalendar();
-                    MyCalendar myCalendar = x.getDb(MyApplication.getDaoConfig())
-                            .selector(MyCalendar.class)
-                            .where("year", "=", calendar.getYear())
-                            .and("month", "=", calendar.getMonth())
-                            .and("day", "=", calendar.getDay())
-                            .findFirst();
-                    if (myCalendar != null) {
-                        x.getDb(MyApplication.getDaoConfig()).delete(myCalendar);
-                        initData();
-                        tvCalendarDetail.setText("");
-                    }
+                boolean deleteSuccess = AppManager.getInstance().deleteScheme(mCalendarView.getSelectedCalendar());
+                if (deleteSuccess) {
+                    initData();
+                    tvCalendarDetail.setText("");
+                } else {
 
-                } catch (DbException e) {
-                    e.printStackTrace();
                 }
-
             }
         });
 
@@ -171,34 +176,11 @@ public class MainActivity extends AppCompatActivity implements
         seconds = localCalendar.get(java.util.Calendar.SECOND);//获取秒钟
     }
 
+    /**
+     * 初始化日历数据
+     */
     private void initData() {
-        Map<String, Calendar> map = new HashMap<>();
-        try {
-            List<MyCalendar> myCalendars = x.getDb(MyApplication.getDaoConfig()).findAll(MyCalendar.class);
-            if (myCalendars != null) {
-                LogUtils.e("---" + myCalendars.size());
-                if (myCalendars.size() > 0) {
-                    for (int i = 0; i < myCalendars.size(); i++) {
-                        Random random = new Random();
-                        int ranColor = 0xff000000 | random.nextInt(0x00ffffff);
-                        MyCalendar myCalendar = myCalendars.get(i);
-                        Calendar calendar = getSchemeCalendar(myCalendar.getYear(),
-                                myCalendar.getMonth(),
-                                myCalendar.getDay(),
-                                ranColor,
-                                myCalendar.getSchemeType(),
-                                myCalendar.getScheme());
-                        map.put(calendar.toString(),
-                                calendar);
-                        LogUtils.e("--" + myCalendars.get(i).toString());
-                    }
-                }
-
-            }
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
-
+        Map<String, Calendar> map = AppManager.getInstance().getCalendarList();
         btnDelete.setVisibility(View.GONE);
         btnAdd.setVisibility(View.VISIBLE);
         //此方法在巨大的数据量上不影响遍历性能，推荐使用
@@ -210,33 +192,12 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    private Calendar getSchemeCalendar(int year, int month, int day, int color, int type, String text) {
-        Calendar calendar = new Calendar();
-        calendar.setYear(year);
-        calendar.setMonth(month);
-        calendar.setDay(day);
-        calendar.setSchemeColor(color);//如果单独标记颜色、则会使用这个颜色
-        String s = "课";
-        switch (type) {
-            case 0:
-                s = "课";
-                break;
-            case 1:
-                s = "事";
-                break;
-            case 2:
-                s = "议";
-                break;
-        }
-        calendar.setScheme(s);
-        return calendar;
-    }
 
     @SuppressLint("SetTextI18n")
     @Override
     public void onCalendarSelect(Calendar calendar, boolean isClick) {
         try {
-            MyCalendar myCalendar = x.getDb(MyApplication.getDaoConfig())
+            MyCalendar myCalendar = dbManager
                     .selector(MyCalendar.class)
                     .where("year", "=", calendar.getYear())
                     .and("month", "=", calendar.getMonth())
@@ -301,7 +262,7 @@ public class MainActivity extends AppCompatActivity implements
                         EditText etScheme = dialog.getCustomView().findViewById(R.id.et_scheme);
                         myCalendar.setScheme(etScheme.getText().toString());
                         try {
-                            x.getDb(MyApplication.getDaoConfig())
+                            dbManager
                                     .save(myCalendar);
                             ToastUtils.showShort("保存成功");
                             initData();

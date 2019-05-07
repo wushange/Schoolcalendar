@@ -5,6 +5,9 @@ import org.xutils.db.annotation.Table;
 
 import java.util.List;
 
+/**
+ * 日程实体类 。数据库存储
+ */
 @Table(name = "t_calendar")
 public class MyCalendar {
     @Column(name = "id", isId = true)
