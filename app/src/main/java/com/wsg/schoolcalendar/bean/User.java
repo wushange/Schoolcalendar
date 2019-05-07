@@ -1,12 +1,20 @@
 package com.wsg.schoolcalendar.bean;
 
+import org.xutils.db.annotation.Column;
+import org.xutils.db.annotation.Table;
+
 import java.io.Serializable;
 
 /**
  * 用戶实体类
  */
+@Table(name = "user")
 public class User implements Serializable {
+    @Column(name = "id", isId = true)
+    private int id;
+    @Column(name = "name")
     private String name;
+    @Column(name = "password")
     private String password;
     private String comment;
 
