@@ -32,7 +32,7 @@ import com.blankj.utilcode.util.ToastUtils;
 import com.haibin.calendarview.Calendar;
 import com.haibin.calendarview.CalendarLayout;
 import com.haibin.calendarview.CalendarView;
-import com.wsg.schoolcalendar.bean.MyCalendar;
+import com.wsg.schoolcalendar.bean.Scheme;
 import com.wsg.schoolcalendar.manager.AppManager;
 import com.wsg.schoolcalendar.push.EventBusCommon;
 
@@ -41,12 +41,8 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
-import org.xutils.x;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 
 /**
@@ -197,8 +193,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onCalendarSelect(Calendar calendar, boolean isClick) {
         try {
-            MyCalendar myCalendar = dbManager
-                    .selector(MyCalendar.class)
+            Scheme myCalendar = dbManager
+                    .selector(Scheme.class)
                     .where("year", "=", calendar.getYear())
                     .and("month", "=", calendar.getMonth())
                     .and("day", "=", calendar.getDay())
@@ -220,7 +216,7 @@ public class MainActivity extends AppCompatActivity implements
             }
             if (isClick) {
                 if (myCalendar != null) {
-                    tvCalendarDetail.setText("类型：" + getType(myCalendar.getSchemeType()) + "\n\n内容：" + myCalendar.getScheme()
+                    tvCalendarDetail.setText("类型：" + getType(myCalendar.getSchemetype()) + "\n\n内容：" + myCalendar.getScheme()
                             + "\n");
                 } else {
                     tvCalendarDetail.setText("无");
@@ -247,10 +243,11 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     private void addCaledar(final Calendar calendar) {
-        final MyCalendar myCalendar = new MyCalendar();
+        final Scheme myCalendar = new Scheme();
         myCalendar.setYear(calendar.getYear());
         myCalendar.setMonth(calendar.getMonth());
         myCalendar.setDay(calendar.getDay());
+        myCalendar.setSchemetime(myCalendar.getYear()+"-"+myCalendar.getMonth()+"-"+myCalendar.getDay());
 
         MaterialDialog materialDialog = new MaterialDialog.Builder(context).title("添加事件")
                 .customView(R.layout.custom_add_view, true)
@@ -332,7 +329,7 @@ public class MainActivity extends AppCompatActivity implements
         spSchemeType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                myCalendar.setSchemeType(position);
+                myCalendar.setSchemetype(position);
             }
 
             @Override
@@ -368,6 +365,30 @@ public class MainActivity extends AppCompatActivity implements
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refre(EventBusCommon a) {
-        ToastUtils.showShort("开始查询最新日程");
+        ToastUtils.showShort("更新了一个Scheme！");
+        initData();
+        initDateTime();
+//        RequestParams params = new RequestParams("http://192.168.0.10/scheme/getList");
+//        x.http().get(params, new Callback.CommonCallback<String>() {
+//            @Override
+//            public void onSuccess(String result) {
+//                LogUtils.e("---"+ result);
+//            }
+//
+//            @Override
+//            public void onError(Throwable ex, boolean isOnCallback) {
+//
+//            }
+//
+//            @Override
+//            public void onCancelled(CancelledException cex) {
+//
+//            }
+//
+//            @Override
+//            public void onFinished() {
+//
+//            }
+//        });
     }
 }

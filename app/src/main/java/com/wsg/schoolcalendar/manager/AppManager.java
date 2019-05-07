@@ -2,7 +2,7 @@ package com.wsg.schoolcalendar.manager;
 
 import com.blankj.utilcode.util.LogUtils;
 import com.haibin.calendarview.Calendar;
-import com.wsg.schoolcalendar.bean.MyCalendar;
+import com.wsg.schoolcalendar.bean.Scheme;
 
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
@@ -48,11 +48,24 @@ public class AppManager {
     }
 
 
+    public void addScheme(Scheme scheme){
+        String[] tim = scheme.getSchemetime().split("-");
+        scheme.setYear(Integer.parseInt(tim[0]));
+        scheme.setMonth(Integer.parseInt(tim[1]));
+        scheme.setDay(Integer.parseInt(tim[2]));
+        try {
+            x.getDb(getDaoConfig()).save(scheme);
+        } catch (DbException e) {
+            e.printStackTrace();
+        }
+
+
+    }
     public boolean deleteScheme(Calendar calendar) {
-        MyCalendar myCalendar = null;
+        Scheme myCalendar = null;
         try {
             myCalendar = getDBManager()
-                    .selector(MyCalendar.class)
+                    .selector(Scheme.class)
                     .where("year", "=", calendar.getYear())
                     .and("month", "=", calendar.getMonth())
                     .and("day", "=", calendar.getDay())
@@ -73,7 +86,7 @@ public class AppManager {
         Map<String, Calendar> map = new HashMap<>();
         try {
             //从数据库读取日历日程列表
-            List<MyCalendar> myCalendars = x.getDb(getDaoConfig()).findAll(MyCalendar.class);
+            List<Scheme> myCalendars = x.getDb(getDaoConfig()).findAll(Scheme.class);
             if (myCalendars != null) {
                 LogUtils.e("---" + myCalendars.size());
                 if (myCalendars.size() > 0) {
@@ -81,12 +94,12 @@ public class AppManager {
                     for (int i = 0; i < myCalendars.size(); i++) {
                         Random random = new Random();
                         int ranColor = 0xff000000 | random.nextInt(0x00ffffff);
-                        MyCalendar myCalendar = myCalendars.get(i);
+                        Scheme myCalendar = myCalendars.get(i);
                         Calendar calendar = getSchemeCalendar(myCalendar.getYear(),
                                 myCalendar.getMonth(),
                                 myCalendar.getDay(),
                                 ranColor,
-                                myCalendar.getSchemeType(),
+                                myCalendar.getSchemetype(),
                                 myCalendar.getScheme());
                         map.put(calendar.toString(),
                                 calendar);
