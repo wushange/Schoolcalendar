@@ -1,19 +1,20 @@
 package com.wsg.schoolcalendar;
 
 import android.annotation.SuppressLint;
-import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
+import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -21,14 +22,13 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.blankj.utilcode.util.BarUtils;
-import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.TimeUtils;
 import com.blankj.utilcode.util.ToastUtils;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.haibin.calendarview.Calendar;
 import com.haibin.calendarview.CalendarLayout;
 import com.haibin.calendarview.CalendarView;
@@ -42,7 +42,11 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
+import cn.qqtheme.framework.picker.DateTimePicker;
 
 
 /**
@@ -65,21 +69,19 @@ public class MainActivity extends AppCompatActivity implements
     private CalendarView mCalendarView;
     private NestedScrollView mNestedScrollView;
     private LinearLayout mLinearView;
-    private int mYear;
-    private TextView tvCalendarDetail;
+    private RecyclerView tvCalendarDetail;
     private Button btnAdd;
-    private Button btnDelete;
 
 
     private java.util.Calendar localCalendar;
-    private int Year;       //年
-    private int month;      //月
-    private int day;        //日
-    private int hour;       //时
-    private int minute;     //分
-    private int seconds;    //秒
+    private int lYear;       //年
+    private int lMonth;      //月
+    private int lDay;        //日
+    private int lHour;       //时
+    private int lMinute;     //分
 
     private DbManager dbManager;
+    private SchemeAdapter schemeAdapter;
 
     @Override
     public void onStart() {
@@ -113,10 +115,22 @@ public class MainActivity extends AppCompatActivity implements
         mCalendarView = findViewById(R.id.calendarView);
         mNestedScrollView = findViewById(R.id.nestedScrollView);
         mLinearView = findViewById(R.id.linearView);
-        tvCalendarDetail = findViewById(R.id.tv_calendar_detail);
+        tvCalendarDetail = findViewById(R.id.rcl_schemes);
         btnAdd = findViewById(R.id.btn_add);
-        btnDelete = findViewById(R.id.btn_delete);
 
+        //对应日期的 日程课程会议等列表显示
+        tvCalendarDetail.setLayoutManager(new LinearLayoutManager(getBaseContext()));
+        schemeAdapter = new SchemeAdapter(new ArrayList<Scheme>());
+        schemeAdapter.bindToRecyclerView(tvCalendarDetail);
+        schemeAdapter.setOnItemChildClickListener(new BaseQuickAdapter.OnItemChildClickListener() {
+            @Override
+            public void onItemChildClick(BaseQuickAdapter adapter, View view, int position) {
+                ToastUtils.showShort("删除成功");
+                AppManager.getInstance().deleteScheme(schemeAdapter.getItem(position));
+                showSchemeDetails(mCalendarView.getSelectedCalendar());
+                refresDatas();
+            }
+        });
 
         //设置日历长按监听
         mCalendarView.setOnCalendarLongClickListener(this);
@@ -127,7 +141,6 @@ public class MainActivity extends AppCompatActivity implements
         initDateTime();
 
 
-        mYear = mCalendarView.getCurYear();
         mTvMonthDay.setText(mCalendarView.getCurMonth() + "月" + mCalendarView.getCurDay() + "日");
         mTvLunar.setText("今日");
         mTvCurrentDay.setText(String.valueOf(mCalendarView.getCurDay()));
@@ -141,46 +154,33 @@ public class MainActivity extends AppCompatActivity implements
             @Override
             public void onClick(View v) {
                 addCaledar(mCalendarView.getSelectedCalendar());
-
-            }
-        });
-        btnDelete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean deleteSuccess = AppManager.getInstance().deleteScheme(mCalendarView.getSelectedCalendar());
-                if (deleteSuccess) {
-                    initData();
-                    tvCalendarDetail.setText("");
-                } else {
-
-                }
             }
         });
 
+        refresDatas();
 
-        initData();
     }
 
     private void initDateTime() {
         //实例化日期类
         localCalendar = java.util.Calendar.getInstance();
-        Year = localCalendar.get(java.util.Calendar.YEAR);//获取当前年
-        month = localCalendar.get(java.util.Calendar.MONTH) + 1;//获取月份，加1是因为月份是从0开始计算的
-        day = localCalendar.get(java.util.Calendar.DATE);//获取日
-        hour = localCalendar.get(java.util.Calendar.HOUR);//获取小时
-        minute = localCalendar.get(java.util.Calendar.MINUTE);//获取分钟
-        seconds = localCalendar.get(java.util.Calendar.SECOND);//获取秒钟
+        lYear = localCalendar.get(java.util.Calendar.YEAR);//获取当前年
+        lMonth = localCalendar.get(java.util.Calendar.MONTH) + 1;//获取月份，加1是因为月份是从0开始计算的
+        lDay = localCalendar.get(java.util.Calendar.DATE);//获取日
+        lHour = localCalendar.get(java.util.Calendar.HOUR);//获取小时
+        lMinute = localCalendar.get(java.util.Calendar.MINUTE);//获取分钟
     }
 
     /**
-     * 初始化日历数据
+     * 初始化刷新日历数据
      */
-    private void initData() {
+    private void refresDatas() {
+        //从数据库获取是否显示日期标记
         Map<String, Calendar> map = AppManager.getInstance().getCalendarList();
-        btnDelete.setVisibility(View.GONE);
-        btnAdd.setVisibility(View.VISIBLE);
         //此方法在巨大的数据量上不影响遍历性能，推荐使用
         mCalendarView.setSchemeDate(map);
+        showSchemeDetails(mCalendarView.getSelectedCalendar());
+
     }
 
     @Override
@@ -192,40 +192,9 @@ public class MainActivity extends AppCompatActivity implements
     @SuppressLint("SetTextI18n")
     @Override
     public void onCalendarSelect(Calendar calendar, boolean isClick) {
-        try {
-            Scheme myCalendar = dbManager
-                    .selector(Scheme.class)
-                    .where("year", "=", calendar.getYear())
-                    .and("month", "=", calendar.getMonth())
-                    .and("day", "=", calendar.getDay())
-                    .findFirst();
-            mTvLunar.setVisibility(View.VISIBLE);
-            mTvYear.setVisibility(View.VISIBLE);
-            mTvMonthDay.setText(calendar.getMonth() + "月" + calendar.getDay() + "日");
-            mTvYear.setText(String.valueOf(calendar.getYear()));
-            mTvLunar.setText(calendar.getLunar());
-            mYear = calendar.getYear();
-
-            if (myCalendar != null) {
-                btnAdd.setVisibility(View.GONE);
-                btnDelete.setVisibility(View.VISIBLE);
-            } else {
-                tvCalendarDetail.setText("无");
-                btnAdd.setVisibility(View.VISIBLE);
-                btnDelete.setVisibility(View.GONE);
-            }
-            if (isClick) {
-                if (myCalendar != null) {
-                    tvCalendarDetail.setText("类型：" + getType(myCalendar.getSchemetype()) + "\n\n内容：" + myCalendar.getScheme()
-                            + "\n");
-                } else {
-                    tvCalendarDetail.setText("无");
-                }
-            }
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
+        showSchemeDetails(calendar);
     }
+
 
     @Override
     public void onYearChange(int year) {
@@ -242,12 +211,17 @@ public class MainActivity extends AppCompatActivity implements
         addCaledar(calendar);
     }
 
+    /**
+     * 添加一个日程
+     *
+     * @param calendar 当前选择的日期
+     */
     private void addCaledar(final Calendar calendar) {
-        final Scheme myCalendar = new Scheme();
-        myCalendar.setYear(calendar.getYear());
-        myCalendar.setMonth(calendar.getMonth());
-        myCalendar.setDay(calendar.getDay());
-        myCalendar.setSchemetime(myCalendar.getYear()+"-"+myCalendar.getMonth()+"-"+myCalendar.getDay());
+        final Scheme scheme = new Scheme();
+        scheme.setYear(calendar.getYear());
+        scheme.setMonth(calendar.getMonth());
+        scheme.setDay(calendar.getDay());
+        scheme.setSchemetime(scheme.getYear() + "-" + scheme.getMonth() + "-" + scheme.getDay());
 
         MaterialDialog materialDialog = new MaterialDialog.Builder(context).title("添加事件")
                 .customView(R.layout.custom_add_view, true)
@@ -257,16 +231,13 @@ public class MainActivity extends AppCompatActivity implements
                     @Override
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         EditText etScheme = dialog.getCustomView().findViewById(R.id.et_scheme);
-                        myCalendar.setScheme(etScheme.getText().toString());
-                        try {
-                            dbManager
-                                    .save(myCalendar);
-                            ToastUtils.showShort("保存成功");
-                            initData();
-                            initDateTime();
-                        } catch (DbException e) {
-                            e.printStackTrace();
-                        }
+                        scheme.setScheme(etScheme.getText().toString());
+                        AppManager.getInstance().addScheme(scheme);
+                        ToastUtils.showShort("保存成功");
+                        refresDatas();
+                        initDateTime();
+                        Calendar calendar1 = mCalendarView.getSelectedCalendar();
+                        showSchemeDetails(calendar1);
                     }
                 })
                 .onNegative(new MaterialDialog.SingleButtonCallback() {
@@ -274,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements
                     public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         dialog.dismiss();
                         initDateTime();
-                        initData();
+                        refresDatas();
                     }
                 })
                 .build();
@@ -286,39 +257,44 @@ public class MainActivity extends AppCompatActivity implements
         tvCallTime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //实例化日期选择器悬浮窗
-                //参数1：上下文对象
-                //参数2：监听事件
-                //参数3：初始化年份
-                //参数4：初始化月份
-                //参数5：初始化日期
-                new DatePickerDialog(context, new DatePickerDialog.OnDateSetListener() {
-                    //实现监听方法
+                DateTimePicker dateTimePicker = new DateTimePicker((Activity) context, DateTimePicker.HOUR_24);
+                dateTimePicker.setDateRangeStart(1976, 1, 1);
+                dateTimePicker.setDateRangeEnd(2099, 12, 31);
+                dateTimePicker.setSelectedItem(lYear, lMonth, lDay, lHour, lMinute);
+                dateTimePicker.setOnWheelListener(new DateTimePicker.OnWheelListener() {
                     @Override
-                    public void onDateSet(DatePicker datePicker, int i, int i1, int i2) {
-                        //设置文本显示内容，i为年，i1为月，i2为日
-                        //以下赋值给全局变量，是为了后面的时间选择器，选择时间的时候不会获取不到日期！
-                        Year = i;
-                        month = i1 + 1;
-                        day = i2;
-                        //实例化时间选择器
-                        //参数1：上下文对象
-                        //参数2：监听事件
-                        //参数3：初始化小时
-                        //参数4：初始化分钟
-                        //参数5：是否24小时制
-                        new TimePickerDialog(context, new TimePickerDialog.OnTimeSetListener() {
-                            //实现监听方法
-                            @Override
-                            public void onTimeSet(TimePicker timePicker, int i, int i1) {
-                                //设置文本显示内容
-                                String timed = Year + "年" + month + "月" + day + "日   " + i + ":" + i1;
-                                tvCallTime.setText(timed);
-                                LogUtils.e("当前时间：" + Year + "年" + month + "月" + day + "日   " + i + ":" + i1);
-                            }
-                        }, hour, minute, true).show();//记得使用show才能显示
+                    public void onYearWheeled(int index, String year) {
+                        lYear = Integer.parseInt(year);
                     }
-                }, Year, month - 1, day).show();//记得使用show才能显示悬浮窗
+
+                    @Override
+                    public void onMonthWheeled(int index, String month) {
+                        lMonth = Integer.parseInt(month);
+                    }
+
+                    @Override
+                    public void onDayWheeled(int index, String day) {
+                        lDay = Integer.parseInt(day);
+                    }
+
+                    @Override
+                    public void onHourWheeled(int index, String hour) {
+                        lHour = Integer.parseInt(hour);
+                    }
+
+                    @Override
+                    public void onMinuteWheeled(int index, String minute) {
+                        lMinute = Integer.parseInt(minute);
+                    }
+                });
+                dateTimePicker.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialog) {
+                        tvCallTime.setText(lYear + "-" + lMonth + "-" + lDay + " " + lHour + ":" + lMinute);
+                        scheme.setSchemetime(lYear + "-" + lMonth + "-" + lDay + " " + lHour + ":" + lMinute);
+                    }
+                });
+                dateTimePicker.show();
             }
         });
         final String[] spinnerItems = {"课程", "纪事", "会议"};
@@ -329,7 +305,7 @@ public class MainActivity extends AppCompatActivity implements
         spSchemeType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                myCalendar.setSchemetype(position);
+                scheme.setSchemetype(position);
             }
 
             @Override
@@ -341,22 +317,37 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    public String getType(int type) {
-        String string = "";
-        switch (type) {
-            case 0:
-                string = "课程";
-                break;
-            case 1:
-                string = "事件";
-                break;
-            case 2:
-                string = "会议";
-                break;
-            default:
+    /**
+     * 显示当前日期的日程详情列表
+     *
+     * @param calendar 当前日期
+     */
+    private void showSchemeDetails(Calendar calendar) {
+        try {
+            //从数据库读取 当前 Calendar 下的日程列表数据
+            List<Scheme> myCalendar = dbManager
+                    .selector(Scheme.class)
+                    .where("year", "=", calendar.getYear())
+                    .and("month", "=", calendar.getMonth())
+                    .and("day", "=", calendar.getDay())
+                    .findAll();
+            mTvLunar.setVisibility(View.VISIBLE);
+            mTvYear.setVisibility(View.VISIBLE);
+            mTvMonthDay.setText(calendar.getMonth() + "月" + calendar.getDay() + "日");
+            mTvYear.setText(String.valueOf(calendar.getYear()));
+            mTvLunar.setText(calendar.getLunar());
+
+            //为Recyclerview设置数据源
+            if (myCalendar != null) {
+                schemeAdapter.setNewData(myCalendar);
+            } else {
+                schemeAdapter.setNewData(null);
+            }
+        } catch (DbException e) {
+            e.printStackTrace();
         }
-        return string;
     }
+
 
     @Override
     public void onViewChange(boolean isMonthView) {
@@ -366,29 +357,7 @@ public class MainActivity extends AppCompatActivity implements
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void refre(EventBusCommon a) {
         ToastUtils.showShort("更新了一个Scheme！");
-        initData();
+        refresDatas();
         initDateTime();
-//        RequestParams params = new RequestParams("http://192.168.0.10/scheme/getList");
-//        x.http().get(params, new Callback.CommonCallback<String>() {
-//            @Override
-//            public void onSuccess(String result) {
-//                LogUtils.e("---"+ result);
-//            }
-//
-//            @Override
-//            public void onError(Throwable ex, boolean isOnCallback) {
-//
-//            }
-//
-//            @Override
-//            public void onCancelled(CancelledException cex) {
-//
-//            }
-//
-//            @Override
-//            public void onFinished() {
-//
-//            }
-//        });
     }
 }
