@@ -10,13 +10,6 @@ import android.widget.Button;
 import com.blankj.utilcode.util.ActivityUtils;
 import com.blankj.utilcode.util.BarUtils;
 import com.blankj.utilcode.util.ToastUtils;
-import com.wsg.schoolcalendar.bean.Result;
-import com.wsg.schoolcalendar.bean.User;
-
-import org.xutils.common.Callback;
-import org.xutils.ex.DbException;
-import org.xutils.http.RequestParams;
-import org.xutils.x;
 
 /**
  * 登录界面
@@ -53,38 +46,38 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 //请求网络，
-                RequestParams requestParams = new RequestParams();
-                requestParams.addBodyParameter("name", name);
-                requestParams.addBodyParameter("pws", pwd);
-
-                x.http().post(requestParams, new Callback.CommonCallback<Result>() {
-                    @Override
-                    public void onSuccess(Result result) {
-                        //返回结果判断是否登陆成功
-                        if (result.getCode() == 0) {
-                            ToastUtils.showShort("登陆成功！");
-                            ActivityUtils.startActivity(MainActivity.class);
-                        } else {
-                            ToastUtils.showShort("用户不存在！或者密码错误");
-                        }
-
-                    }
-
-                    @Override
-                    public void onError(Throwable ex, boolean isOnCallback) {
-
-                    }
-
-                    @Override
-                    public void onCancelled(CancelledException cex) {
-
-                    }
-
-                    @Override
-                    public void onFinished() {
-
-                    }
-                });
+//                RequestParams requestParams = new RequestParams("http://192.168.0.10");
+//                requestParams.addBodyParameter("name", name);
+//                requestParams.addBodyParameter("pws", pwd);
+//
+//                x.http().post(requestParams, new Callback.CommonCallback<Result>() {
+//                    @Override
+//                    public void onSuccess(Result result) {
+//                        //返回结果判断是否登陆成功
+//                        if (result.getCode() == 0) {
+//                            ToastUtils.showShort("登陆成功！");
+//                            ActivityUtils.startActivity(MainActivity.class);
+//                        } else {
+//                            ToastUtils.showShort("用户不存在！或者密码错误");
+//                        }
+//
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable ex, boolean isOnCallback) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onCancelled(CancelledException cex) {
+//
+//                    }
+//
+//                    @Override
+//                    public void onFinished() {
+//
+//                    }
+//                });
 //                try {
 //                    User user = x.getDb(MyApplication.getDaoConfig()).selector(User.class)
 //                            .where("name", "=", name)
