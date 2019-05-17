@@ -39,15 +39,19 @@ public class MyReceiver extends BroadcastReceiver {
                 LogUtils.d(TAG, "[MyReceiver] 接收到推送下来的自定义消息: " + msg);
                 try {
                     JSONObject userJson = JSONObject.parseObject(msg);
-                    Scheme scheme = JSON.toJavaObject(userJson,Scheme.class);
-                    if(scheme!=null){
+                    Scheme scheme = JSON.toJavaObject(userJson, Scheme.class);
+                    if (scheme != null) {
                         // TODO: 2019/5/7 接受开始查询最新日程
-                        LogUtils.e("--接受开始查询最新日程--"+ scheme.toString());
+                        String[] dates = scheme.getSchemetime().split("-");
+                        scheme.setYear(Integer.parseInt(dates[0]));
+                        scheme.setMonth(Integer.parseInt(dates[1]));
+                        scheme.setDay(Integer.parseInt(dates[2]));
+                        LogUtils.e("--接受开始查询最新日程--" + scheme.toString());
                         AppManager.getInstance().addScheme(scheme);
                         EventBus.getDefault().postSticky(new EventBusCommon());
                     }
                 } catch (Exception e) {
-                    LogUtils.e("----"+ e.getLocalizedMessage());
+                    LogUtils.e("----" + e.getLocalizedMessage());
                     e.printStackTrace();
                 }
 

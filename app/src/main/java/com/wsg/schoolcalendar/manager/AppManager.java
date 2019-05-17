@@ -48,30 +48,20 @@ public class AppManager {
     }
 
 
-    public void addScheme(Scheme scheme){
-        String[] tim = scheme.getSchemetime().split("-");
-        scheme.setYear(Integer.parseInt(tim[0]));
-        scheme.setMonth(Integer.parseInt(tim[1]));
-        scheme.setDay(Integer.parseInt(tim[2]));
+    public void addScheme(Scheme scheme) {
         try {
-            x.getDb(getDaoConfig()).save(scheme);
+            x.getDb(getDaoConfig()).saveOrUpdate(scheme);
         } catch (DbException e) {
             e.printStackTrace();
         }
 
 
     }
-    public boolean deleteScheme(Calendar calendar) {
-        Scheme myCalendar = null;
+
+    public boolean deleteScheme(Scheme scheme) {
         try {
-            myCalendar = getDBManager()
-                    .selector(Scheme.class)
-                    .where("year", "=", calendar.getYear())
-                    .and("month", "=", calendar.getMonth())
-                    .and("day", "=", calendar.getDay())
-                    .findFirst();
-            if (myCalendar != null) {
-                getDBManager().delete(myCalendar);
+            if (scheme != null) {
+                getDBManager().delete(scheme);
                 return true;
             } else {
                 return false;
