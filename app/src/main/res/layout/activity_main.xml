@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?><!--suppress ALL -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#ffffff"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    tools:ignore="RtlHardcoded,HardcodedText,RtlSymmetry,SmallSp">
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#ffffff"
+              android:fitsSystemWindows="true"
+              android:orientation="vertical"
+              tools:ignore="RtlHardcoded,HardcodedText,RtlSymmetry,SmallSp">
 
 
     <RelativeLayout
@@ -25,9 +25,11 @@
             android:textColor="#000000"
             android:textSize="26sp"
             android:textStyle="bold"
-            tools:ignore="RtlSymmetry" />
+            tools:ignore="RtlSymmetry"
+            tools:text="1月"/>
 
         <LinearLayout
+            android:id="@+id/lll"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_toRightOf="@+id/tv_month_day"
@@ -45,7 +47,8 @@
                 android:layout_weight="1"
                 android:gravity="center"
                 android:textColor="#000000"
-                android:textSize="10sp" />
+                android:textSize="10sp"
+                tools:text="2018年"/>
 
             <TextView
                 android:id="@+id/tv_lunar"
@@ -55,8 +58,19 @@
                 android:gravity="center"
                 android:textColor="#000000"
                 android:textSize="10sp"
-                tools:ignore="SmallSp" />
+                tools:ignore="SmallSp"
+                tools:text="8日"/>
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_week"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:text="第三周"
+            android:textColor="#333333"
+            android:textSize="20sp"/>
 
         <FrameLayout
             android:id="@+id/fl_current"
@@ -74,7 +88,7 @@
                 android:contentDescription="@string/app_name"
                 android:scaleType="centerInside"
                 android:src="@mipmap/ic_calendar"
-                android:tint="#000000" />
+                android:tint="#000000"/>
 
             <TextView
                 android:id="@+id/tv_current_day"
@@ -85,7 +99,7 @@
                 android:gravity="center"
                 android:text="13"
                 android:textColor="#000000"
-                android:textSize="12sp" />
+                android:textSize="12sp"/>
         </FrameLayout>
     </RelativeLayout>
 
@@ -143,7 +157,7 @@
             app:year_view_scheme_color="#f17706"
             app:year_view_week_height="0dp"
             app:year_view_week_text_color="#666666"
-            app:year_view_week_text_size="7sp" />
+            app:year_view_week_text_size="7sp"/>
 
 
         <android.support.v4.widget.NestedScrollView
@@ -166,14 +180,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="添加"
-                    android:visibility="visible" />
+                    android:visibility="visible"/>
 
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/rcl_schemes"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    tools:listitem="@layout/recycler_view_item" />
+                    tools:listitem="@layout/recycler_view_item"/>
 
 
             </LinearLayout>
