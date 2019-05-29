@@ -2,14 +2,20 @@ package com.wsg.schoolcalendar;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.icu.text.SimpleDateFormat;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.telecom.Call;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -34,7 +40,10 @@ import com.haibin.calendarview.CalendarLayout;
 import com.haibin.calendarview.CalendarView;
 import com.wsg.schoolcalendar.bean.Scheme;
 import com.wsg.schoolcalendar.manager.AppManager;
+import com.wsg.schoolcalendar.manager.ClockManager;
 import com.wsg.schoolcalendar.push.EventBusCommon;
+import com.wsg.schoolcalendar.receiver.ClockReceiver;
+import com.wsg.schoolcalendar.service.ClockService;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -42,10 +51,13 @@ import org.greenrobot.eventbus.ThreadMode;
 import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import cn.qqtheme.framework.picker.DateTimePicker;
 
@@ -302,6 +314,9 @@ public class MainActivity extends AppCompatActivity implements
 				dateTimePicker.show();
 			}
 		});
+
+
+
 		final String[] spinnerItems = {"课程", "纪事", "会议"};
 		ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(context,
 				android.R.layout.simple_spinner_item, spinnerItems);
@@ -327,6 +342,7 @@ public class MainActivity extends AppCompatActivity implements
 	 *
 	 * @param calendar 当前日期
 	 */
+	@RequiresApi(api = Build.VERSION_CODES.N)
 	private void showSchemeDetails(Calendar calendar) {
 		try {
 			//从数据库读取 当前 Calendar 下的日程列表数据
@@ -346,7 +362,18 @@ public class MainActivity extends AppCompatActivity implements
 			cal.setFirstDayOfWeek(java.util.Calendar.MONDAY); // 设置每周的第一天为星期一
 			cal.set(java.util.Calendar.DAY_OF_WEEK, java.util.Calendar.MONDAY);// 每周从周一开始
 			cal.setMinimalDaysInFirstWeek(7); // 设置每周最少为7天
-			cal.setTime(new Date(calendar.getTimeInMillis()));
+
+			Date date = null;
+			try {
+				//设置起始周
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+				date = sdf.parse("2019-02-25");
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+			long weekMil = (60 * 60 * 60 * 24 * 7) * 1000;
+			long longDate = date.getTime() - weekMil;
+			cal.setTime(new Date(calendar.getTimeInMillis() - longDate));
 			int weeks = cal.get(java.util.Calendar.WEEK_OF_YEAR);
 			tvWeek.setText("第" + weeks + "周");
 			//为Recyclerview设置数据源

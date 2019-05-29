@@ -5,11 +5,13 @@ import com.alibaba.fastjson.annotation.JSONField;
 import org.xutils.db.annotation.Column;
 import org.xutils.db.annotation.Table;
 
+import java.io.Serializable;
+
 /**
  * 日程实体类 。数据库存储
  */
 @Table(name = "t_scheme")
-public class Scheme {
+public class Scheme implements Serializable {
     @JSONField(serialize = false)
     @Column(name = "id", isId = true)
     private int id;

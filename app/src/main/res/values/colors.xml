@@ -7,4 +7,12 @@
     <color name="line_color">#e7e7e7</color>
     <color name="content_background">#f2f2f2</color>
     <color name="solar_background">#009988</color>
+
+    <!--main activity-->
+    <color name="gray">#DCDCDC</color>
+    <color name="white">#FFFFFF</color>
+    <color name="transparent">#00FFFFFF</color>
+    <color name="gray2">#b7b6b6</color>
+    <color name="gray3">#FF7B7B7B</color>
+    <color name="black">#000000</color>
 </resources>

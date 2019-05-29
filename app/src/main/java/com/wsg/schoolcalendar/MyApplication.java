@@ -1,6 +1,7 @@
 package com.wsg.schoolcalendar;
 
 import android.app.Application;
+import android.content.Context;
 
 import com.blankj.utilcode.util.Utils;
 import com.wsg.schoolcalendar.bean.User;

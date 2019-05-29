@@ -10,6 +10,7 @@
         android:protectionLevel="signature" />
 
     <!-- Required  一些系统要求的权限，如访问网络等-->
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD"/>
     <uses-permission android:name="com.wsg.schoolcalendar.permission.JPUSH_MESSAGE" />
     <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -153,7 +154,22 @@
             </intent-filter>
         </receiver>
 
-        <!-- User defined.  For test only  用户自定义接收消息器,3.0.7开始支持,目前新tag/alias接口设置结果会在该广播接收器对应的方法中回调-->
+
+        <activity
+            android:name=".ClockActivity"
+            android:launchMode="singleTask"
+            android:theme="@style/FullScreen" />
+
+        <receiver android:name=".receiver.ClockReceiver">
+            <intent-filter android:priority="100">
+                <action android:name="com.liuzhengwei.memo.action.CLOCK_RECEIVER" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".service.ClockService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>
