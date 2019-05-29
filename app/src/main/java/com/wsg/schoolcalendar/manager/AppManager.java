@@ -75,7 +75,6 @@ public class AppManager {
 		Intent intent = new Intent();
 		intent.putExtra(ClockReceiver.EXTRA_EVENT_ID, id);
 		intent.setClass(context, ClockService.class);
-
 		return PendingIntent.getService(context, 0x001, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 	}
 
