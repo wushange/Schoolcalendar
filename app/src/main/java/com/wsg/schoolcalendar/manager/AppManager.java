@@ -15,8 +15,10 @@ import org.xutils.DbManager;
 import org.xutils.ex.DbException;
 import org.xutils.x;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -65,7 +67,7 @@ public class AppManager {
 	public void addScheme(Scheme scheme, Context context) {
 		try {
 			x.getDb(getDaoConfig()).saveOrUpdate(scheme);
-			ClockManager.getInstance().addAlarm(buildIntent(context, scheme.getId()), TimeUtils.string2Date(scheme.getSchemetime()));
+			ClockManager.getInstance().addAlarm(buildIntent(context, scheme.getId()), TimeUtils.string2Date(scheme.getSchemetime(),new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())));
 		} catch (DbException e) {
 			e.printStackTrace();
 		}

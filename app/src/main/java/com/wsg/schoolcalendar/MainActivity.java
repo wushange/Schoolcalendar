@@ -249,7 +249,7 @@ public class MainActivity extends AppCompatActivity implements
 					public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 						EditText etScheme = dialog.getCustomView().findViewById(R.id.et_scheme);
 						scheme.setScheme(etScheme.getText().toString());
-						AppManager.getInstance().addScheme(scheme);
+						AppManager.getInstance().addScheme(scheme,context);
 						ToastUtils.showShort("保存成功");
 						refresDatas();
 						initDateTime();
