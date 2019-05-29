@@ -31,6 +31,7 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.blankj.utilcode.constant.TimeConstants;
 import com.blankj.utilcode.util.BarUtils;
 import com.blankj.utilcode.util.TimeUtils;
 import com.blankj.utilcode.util.ToastUtils;
@@ -249,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements
 					public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
 						EditText etScheme = dialog.getCustomView().findViewById(R.id.et_scheme);
 						scheme.setScheme(etScheme.getText().toString());
-						AppManager.getInstance().addScheme(scheme,context);
+						AppManager.getInstance().addScheme(scheme, context);
 						ToastUtils.showShort("保存成功");
 						refresDatas();
 						initDateTime();
@@ -316,7 +317,6 @@ public class MainActivity extends AppCompatActivity implements
 		});
 
 
-
 		final String[] spinnerItems = {"课程", "纪事", "会议"};
 		ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(context,
 				android.R.layout.simple_spinner_item, spinnerItems);
@@ -371,11 +371,8 @@ public class MainActivity extends AppCompatActivity implements
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
-			long weekMil = (60 * 60 * 60 * 24 * 7) * 1000;
-			long longDate = date.getTime() - weekMil;
-			cal.setTime(new Date(calendar.getTimeInMillis() - longDate));
-			int weeks = cal.get(java.util.Calendar.WEEK_OF_YEAR);
-			tvWeek.setText("第" + weeks + "周");
+			long a = -(TimeUtils.getTimeSpan(date, TimeUtils.millis2Date(calendar.getTimeInMillis()), TimeConstants.DAY));
+			tvWeek.setText("第" + (a / 7) + "周");
 			//为Recyclerview设置数据源
 			if (myCalendar != null) {
 				schemeAdapter.setNewData(myCalendar);

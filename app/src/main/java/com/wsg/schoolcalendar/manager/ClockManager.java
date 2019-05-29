@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 
+import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.Utils;
 
 import java.util.Date;
@@ -49,6 +50,11 @@ public class ClockManager {
 	 */
 	public void addAlarm(PendingIntent pendingIntent, Date performTime) {
 		cancelAlarm(pendingIntent);
-		getAlarmManager().set(AlarmManager.RTC_WAKEUP, performTime.getTime(), pendingIntent);
+		try {
+			getAlarmManager().set(AlarmManager.RTC_WAKEUP, performTime.getTime(), pendingIntent);
+		} catch (Exception e) {
+			LogUtils.e("---" + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 }

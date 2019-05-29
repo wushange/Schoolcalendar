@@ -33,8 +33,7 @@ public class ClockActivity extends AppCompatActivity {
         setContentView(R.layout.activity_clock);
         mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.clock);
         mVibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        Intent intent = getIntent();
-        event = getIntent().getParcelableExtra(ClockService.EXTRA_EVENT);
+        event = (Scheme) getIntent().getExtras().get(ClockService.EXTRA_EVENT);
         if (event == null) {
             finish();
         }
